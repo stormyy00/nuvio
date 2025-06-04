@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 interface ContentProps {
   result: {
@@ -11,12 +11,17 @@ interface ContentProps {
       has_screenshot: boolean;
     };
   } | null;
-  previewMode: 'preview' | 'code';
-  setPreviewMode: (mode: 'preview' | 'code') => void;
+  previewMode: "preview" | "code";
+  setPreviewMode: (mode: "preview" | "code") => void;
   downloadHtml: () => void;
 }
 
-const Content = ({result, previewMode, setPreviewMode, downloadHtml}: ContentProps) => {
+const Content = ({
+  result,
+  previewMode,
+  setPreviewMode,
+  downloadHtml,
+}: ContentProps) => {
   return (
     <>
       {result && (
@@ -24,12 +29,18 @@ const Content = ({result, previewMode, setPreviewMode, downloadHtml}: ContentPro
           {result.success ? (
             <>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-green-600 mb-4">Clone Generated Successfully!</h2>
+                <h2 className="text-2xl font-bold text-cyan-400 mb-4">
+                  Clone Generated Successfully!
+                </h2>
                 {result.metadata && (
                   <div className="flex gap-4 text-sm text-gray-600">
                     <span>Elements: {result.metadata.elements_extracted}</span>
-                    <span>Stylesheets: {result.metadata.stylesheets_found}</span>
-                    <span>Screenshot: {result.metadata.has_screenshot ? '✓' : '✗'}</span>
+                    <span>
+                      Stylesheets: {result.metadata.stylesheets_found}
+                    </span>
+                    <span>
+                      Screenshot: {result.metadata.has_screenshot ? "✓" : "✗"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -38,27 +49,27 @@ const Content = ({result, previewMode, setPreviewMode, downloadHtml}: ContentPro
                 <div className="flex border-b border-gray-200">
                   <button
                     className={`px-4 py-2 font-medium ${
-                      previewMode === 'preview' 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
+                      previewMode === "preview"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
-                    onClick={() => setPreviewMode('preview')}
+                    onClick={() => setPreviewMode("preview")}
                   >
                     Preview
                   </button>
                   <button
                     className={`px-4 py-2 font-medium ${
-                      previewMode === 'code' 
-                        ? 'text-blue-600 border-b-2 border-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
+                      previewMode === "code"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
-                    onClick={() => setPreviewMode('code')}
+                    onClick={() => setPreviewMode("code")}
                   >
                     Tailwind HTML
                   </button>
                 </div>
-                <button 
-                  onClick={downloadHtml} 
+                <button
+                  onClick={downloadHtml}
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-medium"
                 >
                   Download HTML
@@ -66,7 +77,7 @@ const Content = ({result, previewMode, setPreviewMode, downloadHtml}: ContentPro
               </div>
 
               <div className="border border-gray-300 rounded-lg overflow-hidden">
-                {previewMode === 'preview' ? (
+                {previewMode === "preview" ? (
                   <iframe
                     srcDoc={result.html}
                     className="w-full h-96 border-none"
@@ -81,14 +92,16 @@ const Content = ({result, previewMode, setPreviewMode, downloadHtml}: ContentPro
             </>
           ) : (
             <div className="text-center py-8 bg-gray-950">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">Clone Failed</h2>
+              <h2 className="text-2xl font-bold text-red-600 mb-4">
+                Clone Failed
+              </h2>
               <p className="text-gray-600">{result.error}</p>
             </div>
           )}
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-export default Content
+export default Content;

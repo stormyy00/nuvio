@@ -14,7 +14,7 @@ const Form = ({url, setUrl, handleSubmit, loading}: FormProps) => {
     <>
           <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-y-4 items-center">
         <Input
-          placeholder="Enter website URL"
+          placeholder="Enter website URL i.e. https://example.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="w-full bg-gray-800/50 text-white placeholder-gray-500 rounded-2xl p-4 pr-12 resize-none border border-gray-700/50 focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/20  text-base transition-all duration-200"
