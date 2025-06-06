@@ -22,7 +22,7 @@ const Form = ({url, setUrl, handleSubmit, loading}: FormProps) => {
         />
         <Button
           disabled={loading}
-          className={`w-fit bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-semibold py-4 px-6 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 flex items-center justify-center space-x-2 ${
+          className={`w-fit bg-gradient-to-r cursor-pointer  from-cyan-400 to-blue-500 text-white font-semibold py-4 px-6 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 flex items-center justify-center space-x-2 ${
             loading ? "bg-gray-400" : ""
           }`}
         >
