@@ -1,4 +1,6 @@
 /app/__pycache__
+/app/clone/__pycache__
 /uv.lock
 /.python-version
 /.venv
+.env
