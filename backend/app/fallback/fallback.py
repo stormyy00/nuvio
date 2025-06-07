@@ -1,7 +1,8 @@
+# old/ first iteration of the code
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
-import aiohttp
 from bs4 import BeautifulSoup
 import base64
 from urllib.parse import urljoin, urlparse
@@ -23,20 +24,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# CORS middleware
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:3000"],  # Next.js dev server
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
 class WebsiteScraper:
     def __init__(self):
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        self.gemini_model = genai.GenerativeModel('gemini-2.0-flash')
+        self.gemini_model = genai.GenerativeModel('gemini-2.5-pro-preview-06-05')
     
     def get_chrome_options(self):
         """Configure Chrome options for headless browsing"""
@@ -224,19 +215,15 @@ class WebsiteScraper:
     async def generate_clone_html(self, design_context: Dict, screenshot_b64: Optional[str] = None) -> str:
         """Use Gemini to generate HTML based on design context and optional screenshot"""
         try:
-            # Prepare the prompt
             prompt = self._create_cloning_prompt(design_context)
             
-            # Prepare content for Gemini
             content_parts = [prompt]
             
-            # Add screenshot if available
             if screenshot_b64:
                 import io
                 import base64
                 from PIL import Image
-                
-                # Convert base64 to image for Gemini
+
                 image_data = base64.b64decode(screenshot_b64)
                 image = Image.open(io.BytesIO(image_data))
                 content_parts.extend([
@@ -244,7 +231,6 @@ class WebsiteScraper:
                     image
                 ])
             
-            # Generate response with Gemini
             response = self.gemini_model.generate_content(
                 content_parts,
                 generation_config=genai.types.GenerationConfig(
@@ -254,10 +240,8 @@ class WebsiteScraper:
                 )
             )
             
-            # Extract HTML from response
             html_content = response.text
             
-            # Clean up the response to extract just the HTML
             if "```html" in html_content:
                 html_content = html_content.split("```html")[1].split("```")[0]
             elif "<html" in html_content:

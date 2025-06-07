@@ -1,3 +1,5 @@
+# main implementation of the website cloning service
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
@@ -258,26 +260,21 @@ class EnchancedWebsiteScraper:
         """First pass: Generate overall layout structure"""
         try:
             prompt = f"""
-            You are a senior frontend architect. Given the extracted DESIGN CONTEXT below, produce only the HTML skeleton—with
-            semantic tags (header, nav, main, section, footer)—and minimal embedded CSS for layout (containers, grid/flex).
-            
-            DESIGN CONTEXT (layout_analysis):
+            You are a senior frontend architect. Recreate the full page structure as seen in the REFERENCE SCREENSHOT and described in the DESIGN CONTEXT.
+
+            - Focus only on structural HTML and layout CSS.  
+            - Match the placement and hierarchy of all major sections, navigation, and containers in the screenshot.
+            - Use semantic HTML5 elements (<header>, <nav>, <main>, <section>, <footer>, etc).
+            - Use either CSS Grid or Flexbox for layout in a <style> block.  
+            - Do NOT add any colors, images, or detailed styling yet.
+            - For content, use <div class="placeholder">Content here</div>.
+
+            REFERENCE SCREENSHOT: (see attached image)  
+            DESIGN CONTEXT:
             {json.dumps(design_context['layout_analysis'], indent=2)}
 
-            REQUIREMENTS:
-            1. Output a complete `<html>…</html>` document.
-            2. Use semantic elements: `<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`.
-            3. Define container classes for responsive breakpoints (mobile/tablet/desktop).
-            4. Use CSS Grid or Flexbox: include a `<style>` block with only layout rules (no colors or typography).
-            5. Represent placeholder content as `<div class="placeholder">Content here</div>`.
-            6. Do NOT include any real text, images, or detailed styling.
-
-            Wrap your HTML in a single code fence labeled `html`:
-            ```html
-            <!DOCTYPE html>
-            <html>
-            …
-            </html>
+            Your output **must** be a single valid `<!DOCTYPE html>...` document, wrapped in a single `html` code block.  
+            Do not include any extra explanation or comments.
             """
 
             content_parts = [prompt]
@@ -320,29 +317,22 @@ class EnchancedWebsiteScraper:
                 )
 
             prompt = f"""
-            You are a UI/UX designer. Enhance the provided HTML skeleton by adding full CSS styling.  
+            You are a top-tier UI/UX designer and frontend developer. Enhance the following HTML by **adding full CSS styling** to match the look and feel of the REFERENCE SCREENSHOT.
 
-            INPUT:
-            1. Base HTML:
-            ```html
-            {base_html}
+            - Use all color, typography, spacing, and visual details described in the VISUAL DESIGN CONTEXT.
+            - The layout, alignment, and proportions must match the screenshot as closely as possible.
+            - Add all visual effects, shadows, borders, background images/gradients, hover/focus states, and transitions visible in the screenshot.
+            - The output must be fully responsive for mobile, tablet, and desktop.
 
+            REFERENCE SCREENSHOT: (see attached image)  
             VISUAL DESIGN CONTEXT:
             Typography: {json.dumps(design_context.get('typography_system', {}), indent=2, default=convert_sets)}
             Colors: {json.dumps(design_context.get('color_analysis', {}), indent=2, default=convert_sets)}
             Visual Elements: {json.dumps(design_context.get('visual_elements', {}), indent=2, default=convert_sets)}
 
-            ADD:
-            ...
-            1. Complete CSS styling matching the original design
-            2. Color palette and typography system
-            3. Spacing, shadows, borders, and visual effects
-            4. Hover states and transitions
-            5. Background images/gradients where appropriate
-            6. Modern, polished visual design
-            
-            Keep the same HTML structure but enhance the <style> section significantly.
-            Make it visually stunning and match the original as closely as possible.
+            HTML TO STYLE:
+            ```html
+            {base_html}
             """
 
             content_parts = [prompt]
@@ -595,48 +585,247 @@ class EnchancedWebsiteScraper:
     ) -> str:
         """Single-pass HTML generation for fallback compatibility"""
         try:
-            context_json = json.dumps(design_context, indent=2)
+            # Extract key information for focused prompting
+            layout_type = design_context.get('layout_analysis', {}).get('structure_type', 'standard')
+            content_sections = design_context.get('content_sections', [])
+            navigation = design_context.get('navigation_structure', [])
+            colors = design_context.get('color_analysis', {})
+            typography = design_context.get('typography_system', {})
+            visual_elements = design_context.get('visual_elements', {})
+            interactive_elements = design_context.get('interactive_elements', {})
+            
+            # Build focused context sections
+            key_content = self._extract_key_content(content_sections)
+            navigation_summary = self._summarize_navigation(navigation)
+            visual_summary = self._summarize_visual_elements(visual_elements, colors)
+            
+            prompt = f"""You are a senior frontend developer tasked with creating a pixel-perfect clone of a website. 
 
-            prompt = f"""
-            Expert frontend developer: using the full DESIGN CONTEXT below, create a standalone HTML page
-            that clones the original site. Include semantic HTML, inline CSS, and basic JS interactivity.
+    WEBSITE ANALYSIS:
+    Layout Type: {layout_type}
+    Navigation: {navigation_summary}
+    Key Content Sections: {key_content}
+    Visual Design: {visual_summary}
+    Interactive Elements: {json.dumps(interactive_elements, indent=2)}
 
-            DESIGN CONTEXT (all data):
-            {json.dumps(design_context, indent=2)}
+    REQUIREMENTS:
+    1. Create a complete, responsive HTML5 document with embedded CSS and JavaScript
+    2. Use semantic HTML5 elements (header, nav, main, section, article, footer)
+    3. Implement the exact layout structure identified: {layout_type}
+    4. Apply authentic styling that matches the original design
+    5. Include all navigation links and interactive elements
+    6. Make it fully responsive (mobile-first approach)
+    7. Add smooth transitions and hover effects
+    8. Ensure accessibility with proper ARIA labels and semantic markup
 
-            YOUR TASK:
-            1. Write a complete `<!DOCTYPE html><html>…</html>` document.
-            2. Embed CSS in `<style>` covering layout, colors, typography, and responsive breakpoints.
-            3. Populate the page with real text and images per `content_sections` and `visual_elements`.
-            4. Implement navigation links and any required form elements.
-            5. Add small `<script>` for menus or modal toggles.
-            6. Ensure the output is valid HTML5.
+    SPECIFIC IMPLEMENTATION GUIDELINES:
 
-            Wrap the entire output in a single `html` code block. No extra commentary.
-            """
+    LAYOUT ({layout_type}):
+    {self._get_layout_instructions(layout_type, design_context)}
+
+    STYLING PRIORITIES:
+    1. Color scheme: Extract and apply the dominant color palette
+    2. Typography: Implement the heading hierarchy and font choices
+    3. Spacing: Use consistent margins, padding, and white space
+    4. Visual hierarchy: Emphasize important content sections
+    5. Modern aesthetics: Add subtle shadows, rounded corners, and gradients where appropriate
+
+    CONTENT STRATEGY:
+    - Use the actual extracted text content, not placeholder text
+    - Maintain the original content structure and flow
+    - Preserve the relative importance of different sections
+    - Include proper image alt texts and captions
+
+    INTERACTIVITY:
+    - Implement working navigation menus (including mobile hamburger if needed)
+    - Add form validation and submission handling
+    - Create smooth scrolling between sections
+    - Include modal dialogs or dropdowns where detected
+    - Add loading states and micro-animations
+
+    TECHNICAL REQUIREMENTS:
+    - Mobile-first responsive design with breakpoints at 768px and 1024px
+    - Cross-browser compatibility (modern browsers)
+    - Fast loading with optimized CSS
+    - Valid HTML5 and semantic markup
+    - Accessible design with proper contrast ratios
+
+    OUTPUT FORMAT:
+    Provide ONLY the complete HTML document wrapped in ```html code blocks. No explanations or comments outside the code.
+
+    The HTML should be production-ready and visually indistinguishable from the original website."""
 
             content_parts = [prompt]
             if screenshot_b64:
                 import io
                 import base64
                 from PIL import Image
-
+                
                 image_data = base64.b64decode(screenshot_b64)
                 image = Image.open(io.BytesIO(image_data))
-                content_parts.extend(["\n\nScreenshot for reference:", image])
+                content_parts.extend([
+                    "\n\nREFERENCE SCREENSHOT: Use this as the visual reference for styling, layout, and content placement:",
+                    image
+                ])
 
             response = self.gemini_model.generate_content(
                 content_parts,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.7,
-                    max_output_tokens=8192,
+                    temperature=0.4,  # Lower temperature for more consistent results
+                    max_output_tokens=12000,  # Increased for more detailed output
+                    top_p=0.8,
+                    top_k=40
                 ),
             )
 
             return self._extract_html(response.text)
 
         except Exception as e:
-            logger.error(f"Single-pass HTML generation failed: {e}")
+            logger.error(f"Enhanced HTML generation failed: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Single-pass generation failed: {str(e)}"
+                status_code=500, detail=f"Enhanced generation failed: {str(e)}"
             )
+
+    def _extract_key_content(self, content_sections: List[Dict]) -> str:
+        """Extract and prioritize key content sections"""
+        if not content_sections:
+            return "No specific content sections identified"
+        
+        prioritized = sorted(content_sections, key=lambda x: x.get('estimated_importance', 0), reverse=True)
+        
+        key_sections = []
+        for section in prioritized[:8]:  # Top 8 most important sections
+            content_type = section.get('content_type', 'generic')
+            text_preview = section.get('text_content', '')[:150] + "..." if len(section.get('text_content', '')) > 150 else section.get('text_content', '')
+            classes = ', '.join(section.get('classes', []))
+            
+            key_sections.append(f"- {content_type.upper()}: {text_preview} (Classes: {classes})")
+        
+        return '\n'.join(key_sections)
+
+    def _summarize_navigation(self, navigation: List[Dict]) -> str:
+        """Summarize navigation structure"""
+        if not navigation:
+            return "No navigation structure detected"
+        
+        nav_summary = []
+        for i, nav in enumerate(navigation[:3]):  # Top 3 navigation elements
+            links = nav.get('links', [])
+            if links:
+                link_texts = [link.get('text', 'Unknown') for link in links[:8]]  # Top 8 links
+                nav_summary.append(f"Nav {i+1}: {', '.join(link_texts)}")
+        
+        return ' | '.join(nav_summary) if nav_summary else "Basic navigation detected"
+
+    def _summarize_visual_elements(self, visual_elements: Dict, colors: Dict) -> str:
+        """Summarize visual design elements"""
+        summary_parts = []
+        
+        # Images
+        images = visual_elements.get('images', [])
+        if images:
+            summary_parts.append(f"{len(images)} images detected")
+        
+        # Colors
+        bg_colors = colors.get('background_colors', [])
+        text_colors = colors.get('text_colors', [])
+        if bg_colors or text_colors:
+            color_info = f"Colors: {len(bg_colors)} background, {len(text_colors)} text colors"
+            summary_parts.append(color_info)
+        
+        return ' | '.join(summary_parts) if summary_parts else "Basic visual styling"
+
+    def _get_layout_instructions(self, layout_type: str, design_context: Dict) -> str:
+        """Get specific instructions based on layout type"""
+        layout_analysis = design_context.get('layout_analysis', {})
+        
+        instructions = {
+            'grid': """
+    - Use CSS Grid for the main layout structure
+    - Implement responsive grid columns that adapt to screen size
+    - Ensure grid items are properly aligned and spaced
+    - Use grid-template-areas for complex layouts""",
+            
+            'flexbox': """
+    - Use Flexbox for the primary layout system
+    - Implement flexible containers that adapt to content
+    - Use justify-content and align-items for proper alignment
+    - Create responsive flex directions (column on mobile, row on desktop)""",
+            
+            'sidebar': """
+    - Implement a sidebar layout with main content area
+    - Make sidebar collapsible on mobile devices
+    - Use appropriate widths (sidebar: 250-300px, main: remaining space)
+    - Ensure proper responsive behavior""",
+            
+            'standard': """
+    - Use a traditional box model layout
+    - Implement proper container widths and centering
+    - Use floats or flexbox for multi-column sections
+    - Ensure responsive stacking on mobile devices"""
+        }
+        
+        base_instruction = instructions.get(layout_type, instructions['standard'])
+        
+        # Add specific details from layout analysis
+        header_info = layout_analysis.get('header', {})
+        footer_info = layout_analysis.get('footer', {})
+        
+        if header_info.get('exists'):
+            base_instruction += "\n- Include a prominent header section with navigation"
+        
+        if footer_info.get('exists'):
+            base_instruction += "\n- Include a comprehensive footer section"
+        
+        return base_instruction
+
+    async def generate_clone_html_iterative(
+        self, design_context: Dict, screenshot_b64: Optional[str] = None
+    ) -> str:
+        """Iterative approach: Generate, review, and refine"""
+        try:
+            # First pass - generate initial HTML
+            initial_html = await self.generate_clone_html_enhanced(design_context, screenshot_b64)
+            
+            # Second pass - review and refine
+            refinement_prompt = f"""Review and improve this HTML code for a website clone:
+
+    CURRENT HTML:
+    ```html
+    {initial_html[:4000]}...
+    ```
+
+    IMPROVEMENT AREAS TO FOCUS ON:
+    1. Visual polish - Add subtle animations, better spacing, modern design touches
+    2. Code quality - Optimize CSS, remove redundancy, improve structure  
+    3. Responsiveness - Ensure smooth mobile experience
+    4. Accessibility - Add proper ARIA labels, focus states, semantic markup
+    5. Performance - Optimize CSS delivery, reduce unused styles
+
+    Provide the complete improved HTML with these enhancements. Focus on making it production-ready and visually stunning."""
+
+            content_parts = [refinement_prompt]
+            if screenshot_b64:
+                import io
+                import base64
+                from PIL import Image
+                
+                image_data = base64.b64decode(screenshot_b64)
+                image = Image.open(io.BytesIO(image_data))
+                content_parts.extend(["\n\nTarget design reference:", image])
+
+            refined_response = self.gemini_model.generate_content(
+                content_parts,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=10000,
+                ),
+            )
+
+            refined_html = self._extract_html(refined_response.text)
+            return refined_html if refined_html and len(refined_html) > len(initial_html) * 0.8 else initial_html
+
+        except Exception as e:
+            logger.error(f"Iterative generation failed: {e}")
+            # Fallback to single enhanced pass
+            return await self.generate_clone_html_enhanced(design_context, screenshot_b64)
